@@ -1,0 +1,14 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 1adeb6620696b329c1f62bdd12c7278c713dcf48939523ff7d9457ef80b4caf2 # shrinks to record = HistoryRecord { id: None, created_at: "2023-08-28T10:07:14Z", original_latex: "\\gamma + \\beta + \\alpha + x_i", edited_latex: Some("\\frac{a}{b}"), confidence: 0.23, engine_version: "hl4qp1-1m", thumbnail: None, is_favorite: true }
+cc c45a520a57579de661f00a95793fd951606e9d9cdc10510541d0c6abdd0c6bf1 # shrinks to record = HistoryRecord { id: None, created_at: "2028-01-03T18:39:08Z", original_latex: "\\int_0^1 x dx + \\sqrt{x} + E = mc^2", edited_latex: Some("x_i + x_i + --d"), confidence: 0.85, engine_version: "pix2tex-v1", thumbnail: None, is_favorite: false }
+cc 53ac111eb80b0ec39575f343c4764314220c442508015ce05f952d75fc1b650e # shrinks to keyword = "sum", matching_count = 3, non_matching_count = 3
+cc 0334c9d9b5978d0d4c2ec9a5cdb33155e8f344fd6486256a06376ac76ed59e91 # shrinks to record = HistoryRecord { id: None, created_at: "2022-04-19T19:45:13Z", original_latex: "\\beta + E = mc^2 + \\sqrt{x}", edited_latex: None, confidence: 0.91, engine_version: "pix2tex-v1", thumbnail: Some([137, 80, 78, 71, 77, 176, 109, 160, 2, 120, 1, 148, 2, 78, 73, 239, 176, 32, 1, 7, 109, 15, 167, 172, 230, 86, 15, 32, 146, 105]), is_favorite: true }
+cc 80c8bec2662986024eaff5230bf54d246152068ea54a3023924de652b49a893e # shrinks to keyword = "frac", matching_count = 3, non_matching_count = 3
+cc 9e05c3d6da92c99f6c3e48d63a8138b33524c87e44683b5bed391cf46eb4acf3 # shrinks to record = HistoryRecord { id: None, created_at: "2028-11-23T21:28:10Z", original_latex: "\\sqrt{x} + \\int_0^1 x dx + E = mc^2", edited_latex: None, confidence: 0.34, engine_version: "latex-ocr-1.0", thumbnail: None, is_favorite: true }
+cc 93dac85558b4d023e0b2cde7c9a045ee1ac5928278e7cf5de3d8d10878af3a89 # shrinks to matching_count = 1, non_matching_count = 3
+cc 95fa465542c10e7743739c93aa00e2ba1cb8831b84b254677705afb2f31b4ef8 # shrinks to record = HistoryRecord { id: None, created_at: "2026-11-26T19:17:44Z", original_latex: "\\alpha", edited_latex: None, confidence: 0.31, engine_version: "latex-ocr-1.0", thumbnail: Some([137, 80, 78, 71, 194, 85, 14, 231, 174, 234, 26, 124, 218, 134, 123, 96, 166, 254, 80, 164, 53, 85, 179, 189, 204, 187, 123, 115, 245, 113, 65, 22, 5, 174, 198, 34, 255, 229, 212, 35, 209, 165, 217, 96, 71, 5, 237, 130, 169, 232, 119, 251, 227, 124, 133, 35, 197, 109, 194, 187, 38]), is_favorite: false }

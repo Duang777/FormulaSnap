@@ -39,12 +39,12 @@ async fn cancel_capture() -> Result<(), String> {
     Err("用户取消截图".to_string())
 }
 
-/// 使用 Python pix2tex 进行公式识别
+/// 使用 Python texify 进行公式识别
 /// 
-/// 由于 pix2tex 是 encoder-decoder 模型，decoder 是自回归的，
-/// 不容易直接导出为 ONNX。因此使用 Python 子进程调用 pix2tex。
+/// 由于 texify 是 encoder-decoder 模型，decoder 是自回归的，
+/// 不容易直接导出为 ONNX。因此使用 Python 子进程调用 texify。
 #[tauri::command]
-async fn recognize_formula(image: Vec<u8>) -> Result<OcrResult, String> {
+async fn recognize_formula(image: Vec<u8>, app_handle: tauri::AppHandle) -> Result<OcrResult, String> {
     use std::process::Command;
     use std::io::Write;
 
@@ -59,8 +59,8 @@ async fn recognize_formula(image: Vec<u8>) -> Result<OcrResult, String> {
             .map_err(|e| format!("无法写入临时文件: {}", e))?;
     }
 
-    // 获取 Python 脚本路径
-    let script_path = get_ocr_script_path()?;
+    // 获取 Python 脚本路径（优先从资源目录获取）
+    let script_path = get_ocr_script_path(&app_handle)?;
 
     // 获取 Python 解释器路径（优先使用虚拟环境）
     let python = get_python_path();
@@ -70,14 +70,14 @@ async fn recognize_formula(image: Vec<u8>) -> Result<OcrResult, String> {
         .arg(&script_path)
         .arg(temp_path.to_string_lossy().as_ref())
         .output()
-        .map_err(|e| format!("无法启动 Python 进程: {}。请确保已安装 pix2tex: pip install pix2tex", e))?;
+        .map_err(|e| format!("无法启动 Python 进程: {}。\n\n请确保已安装 Python 和 texify:\n1. 安装 Python 3.8+\n2. 运行: pip install texify", e))?;
 
     // 清理临时文件
     let _ = std::fs::remove_file(&temp_path);
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("OCR 识别失败: {}", stderr));
+        return Err(format!("OCR 识别失败: {}\n\n请确保已安装 texify: pip install texify", stderr));
     }
 
     // 解析 JSON 输出
@@ -102,7 +102,26 @@ async fn recognize_formula(image: Vec<u8>) -> Result<OcrResult, String> {
 }
 
 /// 获取 OCR Python 脚本路径
-fn get_ocr_script_path() -> Result<String, String> {
+/// 优先从 Tauri 资源目录获取（用于打包后的应用）
+/// 回退到开发时的相对路径
+fn get_ocr_script_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    
+    // 1. 首先尝试从 Tauri 资源目录获取（打包后的应用）
+    if let Ok(resource_path) = app_handle.path().resource_dir() {
+        let script_in_resource = resource_path.join("scripts").join("ocr_server.py");
+        if script_in_resource.exists() {
+            return Ok(script_in_resource.to_string_lossy().to_string());
+        }
+        
+        // 也尝试直接在资源目录下
+        let script_direct = resource_path.join("ocr_server.py");
+        if script_direct.exists() {
+            return Ok(script_direct.to_string_lossy().to_string());
+        }
+    }
+    
+    // 2. 开发模式：尝试相对路径
     let possible_paths = [
         "../scripts/ocr_server.py",
         "scripts/ocr_server.py",
@@ -119,7 +138,7 @@ fn get_ocr_script_path() -> Result<String, String> {
         }
     }
 
-    Err("OCR 脚本不存在".to_string())
+    Err("OCR 脚本不存在。\n\n此应用需要 Python 环境和 texify 库才能进行公式识别。\n\n请按以下步骤操作：\n1. 安装 Python 3.8 或更高版本\n2. 运行命令: pip install texify\n3. 重新启动应用".to_string())
 }
 
 /// 获取 Python 解释器路径

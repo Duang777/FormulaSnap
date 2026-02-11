@@ -15,8 +15,21 @@
 从 [Releases](https://github.com/Duang777/FormulaSnap/releases) 页面下载对应平台的安装包：
 
 - Windows: `.msi` 或 `.exe`
-- macOS: `.dmg`
-- Linux: `.deb` 或 `.AppImage`
+
+### ⚠️ 重要：Python 环境要求
+
+FormulaSnap 使用 [texify](https://github.com/VikParuchuri/texify) 进行公式识别，需要 Python 环境：
+
+1. **安装 Python 3.8+**
+   - 下载地址：https://www.python.org/downloads/
+   - 安装时勾选「Add Python to PATH」
+
+2. **安装 texify**
+   ```bash
+   pip install texify
+   ```
+
+3. **首次运行**会自动下载模型（约 500MB），请确保网络畅通
 
 ## 🚀 使用方法
 
@@ -31,12 +44,17 @@
 
 - Node.js 18+
 - Rust 1.70+
+- Python 3.8+ (用于 OCR)
 - pnpm 或 npm
 
 ### 安装依赖
 
 ```bash
+# 前端依赖
 npm install
+
+# Python OCR 依赖
+pip install texify
 ```
 
 ### 启动开发服务器

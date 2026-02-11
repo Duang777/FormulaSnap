@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 821153f5160b7bc2ca10636a7cd7458547663ca7818e19d3d50f49556fc97d77 # shrinks to (latex, cmd_name) = ("\\unsupported{x}", "unsupported")
