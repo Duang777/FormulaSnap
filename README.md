@@ -9,27 +9,17 @@
 - **一键复制** - 复制为 Word 可粘贴的 OMML 格式或 LaTeX 源码
 - **历史记录** - 自动保存识别历史，支持搜索和收藏
 - **批量导出** - 导出为 `.tex` 或 `.docx` 文件
+- **离线使用** - 内置 OCR 引擎，无需联网
 
 ## 📦 安装
 
-从 [Releases](https://github.com/Duang777/FormulaSnap/releases) 页面下载对应平台的安装包：
+从 [Releases](https://github.com/Duang777/FormulaSnap/releases) 页面下载安装包：
 
-- Windows: `.msi` 或 `.exe`
+- Windows: `.msi` 或 `.exe` 安装程序
 
-### ⚠️ 重要：Python 环境要求
+下载后直接安装即可使用，无需额外配置。
 
-FormulaSnap 使用 [texify](https://github.com/VikParuchuri/texify) 进行公式识别，需要 Python 环境：
-
-1. **安装 Python 3.8+**
-   - 下载地址：https://www.python.org/downloads/
-   - 安装时勾选「Add Python to PATH」
-
-2. **安装 texify**
-   ```bash
-   pip install texify
-   ```
-
-3. **首次运行**会自动下载模型（约 500MB），请确保网络畅通
+> 注意：首次识别时需要下载模型文件（约 500MB），请确保网络畅通。
 
 ## 🚀 使用方法
 
@@ -44,7 +34,7 @@ FormulaSnap 使用 [texify](https://github.com/VikParuchuri/texify) 进行公式
 
 - Node.js 18+
 - Rust 1.70+
-- Python 3.8+ (用于 OCR)
+- Python 3.8+ (用于 OCR 引擎)
 - pnpm 或 npm
 
 ### 安装依赖
@@ -53,7 +43,7 @@ FormulaSnap 使用 [texify](https://github.com/VikParuchuri/texify) 进行公式
 # 前端依赖
 npm install
 
-# Python OCR 依赖
+# Python OCR 依赖（开发模式）
 pip install texify
 ```
 
@@ -65,7 +55,20 @@ cargo tauri dev
 
 ### 构建发布版本
 
+发布版本会自动通过 GitHub Actions 构建，包含打包好的 OCR 引擎。
+
+本地构建需要先打包 OCR 引擎：
+
 ```bash
+# 安装 PyInstaller
+pip install pyinstaller
+
+# 打包 OCR 引擎
+cd scripts
+pyinstaller ocr_server.py --onedir --name=ocr_engine --distpath=../src-tauri/ocr_engine --clean --noconfirm --noconsole --collect-all=texify --collect-all=transformers --collect-all=tokenizers
+
+# 构建 Tauri 应用
+cd ..
 cargo tauri build
 ```
 

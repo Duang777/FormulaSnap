@@ -39,16 +39,16 @@ async fn cancel_capture() -> Result<(), String> {
     Err("用户取消截图".to_string())
 }
 
-/// 使用 Python texify 进行公式识别
+/// 使用 texify 进行公式识别
 /// 
-/// 由于 texify 是 encoder-decoder 模型，decoder 是自回归的，
-/// 不容易直接导出为 ONNX。因此使用 Python 子进程调用 texify。
+/// 优先使用打包的 ocr_engine.exe（PyInstaller 打包），
+/// 回退到 Python 脚本调用。
 #[tauri::command]
 async fn recognize_formula(image: Vec<u8>, app_handle: tauri::AppHandle) -> Result<OcrResult, String> {
     use std::process::Command;
     use std::io::Write;
 
-    // 将图片写入临时文件（避免命令行参数长度限制）
+    // 将图片写入临时文件
     let temp_dir = std::env::temp_dir();
     let temp_path = temp_dir.join("formulasnap_ocr_input.png");
     
@@ -59,25 +59,21 @@ async fn recognize_formula(image: Vec<u8>, app_handle: tauri::AppHandle) -> Resu
             .map_err(|e| format!("无法写入临时文件: {}", e))?;
     }
 
-    // 获取 Python 脚本路径（优先从资源目录获取）
-    let script_path = get_ocr_script_path(&app_handle)?;
+    // 获取 OCR 引擎路径
+    let (ocr_cmd, ocr_args) = get_ocr_command(&app_handle, &temp_path)?;
 
-    // 获取 Python 解释器路径（优先使用虚拟环境）
-    let python = get_python_path();
-
-    // 调用 Python 脚本
-    let output = Command::new(&python)
-        .arg(&script_path)
-        .arg(temp_path.to_string_lossy().as_ref())
+    // 调用 OCR 引擎
+    let output = Command::new(&ocr_cmd)
+        .args(&ocr_args)
         .output()
-        .map_err(|e| format!("无法启动 Python 进程: {}。\n\n请确保已安装 Python 和 texify:\n1. 安装 Python 3.8+\n2. 运行: pip install texify", e))?;
+        .map_err(|e| format!("无法启动 OCR 引擎: {}", e))?;
 
     // 清理临时文件
     let _ = std::fs::remove_file(&temp_path);
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("OCR 识别失败: {}\n\n请确保已安装 texify: pip install texify", stderr));
+        return Err(format!("OCR 识别失败: {}", stderr));
     }
 
     // 解析 JSON 输出
@@ -101,44 +97,59 @@ async fn recognize_formula(image: Vec<u8>, app_handle: tauri::AppHandle) -> Resu
     Ok(OcrResult { latex, confidence })
 }
 
-/// 获取 OCR Python 脚本路径
-/// 优先从 Tauri 资源目录获取（用于打包后的应用）
-/// 回退到开发时的相对路径
-fn get_ocr_script_path(app_handle: &tauri::AppHandle) -> Result<String, String> {
+/// 获取 OCR 命令和参数
+/// 优先使用打包的 ocr_engine.exe，回退到 Python 脚本
+fn get_ocr_command(app_handle: &tauri::AppHandle, image_path: &std::path::Path) -> Result<(String, Vec<String>), String> {
     use tauri::Manager;
     
-    // 1. 首先尝试从 Tauri 资源目录获取（打包后的应用）
+    let image_arg = image_path.to_string_lossy().to_string();
+    
+    // 1. 首先尝试打包的 ocr_engine.exe（生产环境）
     if let Ok(resource_path) = app_handle.path().resource_dir() {
-        let script_in_resource = resource_path.join("scripts").join("ocr_server.py");
-        if script_in_resource.exists() {
-            return Ok(script_in_resource.to_string_lossy().to_string());
+        // Windows: ocr_engine/ocr_engine.exe
+        let exe_path = resource_path.join("ocr_engine").join("ocr_engine.exe");
+        if exe_path.exists() {
+            return Ok((exe_path.to_string_lossy().to_string(), vec![image_arg]));
         }
         
-        // 也尝试直接在资源目录下
-        let script_direct = resource_path.join("ocr_server.py");
-        if script_direct.exists() {
-            return Ok(script_direct.to_string_lossy().to_string());
+        // Linux/macOS: ocr_engine/ocr_engine
+        let exe_path_unix = resource_path.join("ocr_engine").join("ocr_engine");
+        if exe_path_unix.exists() {
+            return Ok((exe_path_unix.to_string_lossy().to_string(), vec![image_arg]));
         }
     }
     
-    // 2. 开发模式：尝试相对路径
-    let possible_paths = [
+    // 2. 开发模式：尝试本地打包的 ocr_engine
+    let dev_exe_paths = [
+        "ocr_engine/ocr_engine.exe",
+        "../src-tauri/ocr_engine/ocr_engine/ocr_engine.exe",
+    ];
+    
+    for path in &dev_exe_paths {
+        if std::path::Path::new(path).exists() {
+            return Ok((path.to_string(), vec![image_arg]));
+        }
+    }
+    
+    // 3. 回退到 Python 脚本（开发模式）
+    let script_paths = [
         "../scripts/ocr_server.py",
         "scripts/ocr_server.py",
         concat!(env!("CARGO_MANIFEST_DIR"), "/../scripts/ocr_server.py"),
     ];
-
-    for path in &possible_paths {
-        let path_buf = std::path::Path::new(path);
-        if path_buf.exists() {
-            return path_buf
+    
+    for path in &script_paths {
+        if std::path::Path::new(path).exists() {
+            let python = get_python_path();
+            let script = std::path::Path::new(path)
                 .canonicalize()
                 .map(|p| p.to_string_lossy().to_string())
-                .map_err(|e| format!("无法获取脚本路径: {}", e));
+                .unwrap_or_else(|_| path.to_string());
+            return Ok((python, vec![script, image_arg]));
         }
     }
 
-    Err("OCR 脚本不存在。\n\n此应用需要 Python 环境和 texify 库才能进行公式识别。\n\n请按以下步骤操作：\n1. 安装 Python 3.8 或更高版本\n2. 运行命令: pip install texify\n3. 重新启动应用".to_string())
+    Err("OCR 引擎不存在，请重新安装应用".to_string())
 }
 
 /// 获取 Python 解释器路径

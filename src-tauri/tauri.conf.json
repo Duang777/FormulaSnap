@@ -32,11 +32,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "../models/pix2tex.onnx",
-      "../models/pix2tex.onnx.data",
-      "../scripts/ocr_server.py"
-    ]
+    "resources": {
+      "ocr_engine/**/*": "./"
+    }
   },
   "plugins": {}
 }

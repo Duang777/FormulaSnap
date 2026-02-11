@@ -1,0 +1,2 @@
+# This directory will contain the PyInstaller-built OCR engine
+# The actual files are generated during the CI build process

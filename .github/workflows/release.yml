@@ -14,6 +14,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller texify
+
+      - name: Build OCR engine with PyInstaller
+        run: |
+          cd scripts
+          pyinstaller ocr_server.py --onedir --name=ocr_engine --distpath=../src-tauri/ocr_engine --workpath=../build/pyinstaller --specpath=../build --clean --noconfirm --noconsole --collect-all=texify --collect-all=transformers --collect-all=tokenizers --hidden-import=texify --hidden-import=texify.inference --hidden-import=texify.model.model --hidden-import=texify.model.processor
+        shell: pwsh
+
+      - name: Verify OCR engine build
+        run: |
+          echo "OCR engine files:"
+          Get-ChildItem -Path src-tauri/ocr_engine -Recurse | Select-Object FullName
+        shell: pwsh
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -36,7 +58,7 @@ jobs:
           Get-ChildItem -Path . -Recurse -Filter "*setup*.exe" | Select-Object FullName
         shell: pwsh
 
-      - name: Upload MSI
+      - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
