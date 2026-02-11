@@ -9,14 +9,8 @@ jobs:
   release:
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'windows-latest'
-            args: ''
-
-    runs-on: ${{ matrix.platform }}
+    runs-on: windows-latest
+    
     steps:
       - uses: actions/checkout@v4
 
@@ -32,13 +26,14 @@ jobs:
         run: npm ci
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        run: npm run tauri build
+
+      - name: Upload MSI
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectPath: src-tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: 'FormulaSnap ${{ github.ref_name }}'
-          releaseBody: '请查看 CHANGELOG 了解更新内容。'
-          releaseDraft: true
-          prerelease: false
