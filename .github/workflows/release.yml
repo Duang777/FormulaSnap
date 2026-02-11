@@ -63,7 +63,7 @@ jobs:
         with:
           draft: true
           files: |
-            **/*.msi
             **/*setup*.exe
+            **/FormulaSnap*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
