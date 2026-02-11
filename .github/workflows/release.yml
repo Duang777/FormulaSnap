@@ -23,12 +23,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
-          pip install texify==0.1.10 transformers==4.38.2
+          pip install texify==0.2.1 transformers==4.44.0
 
       - name: Build OCR engine with PyInstaller
         run: |
           cd scripts
-          pyinstaller ocr_server.py --onefile --name=ocr_engine --distpath=../src-tauri/ocr_engine --workpath=../build/pyinstaller --specpath=../build --clean --noconfirm --noconsole --collect-all=texify --collect-all=transformers --collect-all=tokenizers --hidden-import=texify --hidden-import=texify.inference --hidden-import=texify.model.model --hidden-import=texify.model.processor
+          pyinstaller ocr_server.py --onefile --name=ocr_engine --distpath=../src-tauri/ocr_engine --workpath=../build/pyinstaller --specpath=../build --clean --noconfirm --collect-all=texify --collect-all=transformers --collect-all=tokenizers --hidden-import=texify --hidden-import=texify.inference --hidden-import=texify.model.model --hidden-import=texify.model.processor
         shell: pwsh
 
       - name: Verify OCR engine build

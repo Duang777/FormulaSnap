@@ -8,6 +8,14 @@ node_modules/
 # Build output
 dist/
 target/
+build/
+
+# PyInstaller output (keep .gitkeep)
+src-tauri/ocr_engine/*.exe
+src-tauri/ocr_engine/_internal/
+
+# Test files
+test_formula.png
 
 # IDE
 .idea/

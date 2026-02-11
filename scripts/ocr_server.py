@@ -8,23 +8,32 @@ import os
 import warnings
 import logging
 
+# 保存原始 stdout，用于最后输出 JSON
+_original_stdout = sys.stdout
+
+# 立即重定向 stdout 到 stderr，防止任何导入时的输出污染 JSON
+sys.stdout = sys.stderr
+
 # 抑制所有警告和日志
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 os.environ["TRANSFORMERS_VERBOSITY"] = "error"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 warnings.filterwarnings("ignore")
 logging.disable(logging.CRITICAL)
-logging.basicConfig(stream=sys.stderr, level=logging.ERROR)
+
+def output_json(data):
+    """输出 JSON 到原始 stdout"""
+    print(json.dumps(data), file=_original_stdout)
 
 def main():
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "用法: ocr_engine <image_path>"}))
+        output_json({"error": "用法: ocr_engine <image_path>"})
         sys.exit(1)
 
     image_path = sys.argv[1]
     
     if not os.path.exists(image_path):
-        print(json.dumps({"error": f"图片文件不存在: {image_path}"}))
+        output_json({"error": f"图片文件不存在: {image_path}"})
         sys.exit(1)
 
     try:
@@ -36,14 +45,8 @@ def main():
         from texify.model.processor import load_processor
         from PIL import Image
 
-        # 重定向 stdout 抑制模型加载日志
-        old_stdout = sys.stdout
-        sys.stdout = sys.stderr
-        
         model = load_model()
         processor = load_processor()
-        
-        sys.stdout = old_stdout
 
         image = Image.open(image_path)
         if image.mode != "RGB":
@@ -52,7 +55,6 @@ def main():
         results = batch_inference([image], model, processor)
         
         if results and len(results) > 0:
-            # 处理结果 - 可能是字符串或其他类型
             result = results[0]
             if isinstance(result, str):
                 latex = result
@@ -64,20 +66,18 @@ def main():
                 latex = str(result)
             
             latex = latex.strip()
-            # 移除可能的 $ 包裹
             if latex.startswith("$$") and latex.endswith("$$"):
                 latex = latex[2:-2].strip()
             elif latex.startswith("$") and latex.endswith("$"):
                 latex = latex[1:-1].strip()
             
-            print(json.dumps({"latex": latex, "confidence": 0.95}))
+            output_json({"latex": latex, "confidence": 0.95})
         else:
-            print(json.dumps({"error": "识别结果为空"}))
+            output_json({"error": "识别结果为空"})
             sys.exit(1)
             
     except Exception as e:
-        import traceback
-        print(json.dumps({"error": str(e), "traceback": traceback.format_exc()}))
+        output_json({"error": str(e)})
         sys.exit(1)
 
 if __name__ == "__main__":

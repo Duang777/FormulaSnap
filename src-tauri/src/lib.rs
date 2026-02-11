@@ -62,7 +62,19 @@ async fn recognize_formula(image: Vec<u8>, app_handle: tauri::AppHandle) -> Resu
     // 获取 OCR 引擎路径
     let (ocr_cmd, ocr_args) = get_ocr_command(&app_handle, &temp_path)?;
 
-    // 调用 OCR 引擎
+    // 调用 OCR 引擎（Windows 上隐藏控制台窗口）
+    #[cfg(windows)]
+    let output = {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        Command::new(&ocr_cmd)
+            .args(&ocr_args)
+            .creation_flags(CREATE_NO_WINDOW)
+            .output()
+            .map_err(|e| format!("无法启动 OCR 引擎: {}", e))?
+    };
+    
+    #[cfg(not(windows))]
     let output = Command::new(&ocr_cmd)
         .args(&ocr_args)
         .output()
