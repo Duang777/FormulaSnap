@@ -63,7 +63,6 @@ jobs:
         with:
           draft: true
           files: |
-            **/*setup*.exe
-            **/FormulaSnap*.exe
+            src-tauri/target/release/bundle/nsis/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
