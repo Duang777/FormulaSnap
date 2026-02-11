@@ -28,12 +28,18 @@ jobs:
       - name: Build Tauri app
         run: npm run tauri build
 
+      - name: List build output
+        run: |
+          dir src-tauri\target\release\bundle\msi
+          dir src-tauri\target\release\bundle\nsis
+        shell: cmd
+
       - name: Upload MSI
         uses: softprops/action-gh-release@v1
         with:
           draft: true
           files: |
-            src-tauri/target/release/bundle/msi/*
-            src-tauri/target/release/bundle/nsis/*
+            src-tauri/target/release/bundle/msi/FormulaSnap_*.msi
+            src-tauri/target/release/bundle/nsis/FormulaSnap_*-setup.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
