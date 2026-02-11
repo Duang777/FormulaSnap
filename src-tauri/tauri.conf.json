@@ -33,7 +33,7 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "ocr_engine/**/*": "./"
+      "ocr_engine/**/*": "ocr_engine/"
     }
   },
   "plugins": {}

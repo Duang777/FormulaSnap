@@ -103,29 +103,33 @@ fn get_ocr_command(app_handle: &tauri::AppHandle, image_path: &std::path::Path) 
     use tauri::Manager;
     
     let image_arg = image_path.to_string_lossy().to_string();
+    let mut searched_paths: Vec<String> = Vec::new();
     
     // 1. 首先尝试打包的 ocr_engine.exe（生产环境）
     if let Ok(resource_path) = app_handle.path().resource_dir() {
         // Windows: ocr_engine/ocr_engine.exe
         let exe_path = resource_path.join("ocr_engine").join("ocr_engine.exe");
+        searched_paths.push(exe_path.to_string_lossy().to_string());
         if exe_path.exists() {
             return Ok((exe_path.to_string_lossy().to_string(), vec![image_arg]));
         }
         
-        // Linux/macOS: ocr_engine/ocr_engine
-        let exe_path_unix = resource_path.join("ocr_engine").join("ocr_engine");
-        if exe_path_unix.exists() {
-            return Ok((exe_path_unix.to_string_lossy().to_string(), vec![image_arg]));
+        // 直接在资源目录下
+        let exe_direct = resource_path.join("ocr_engine.exe");
+        searched_paths.push(exe_direct.to_string_lossy().to_string());
+        if exe_direct.exists() {
+            return Ok((exe_direct.to_string_lossy().to_string(), vec![image_arg]));
         }
     }
     
     // 2. 开发模式：尝试本地打包的 ocr_engine
     let dev_exe_paths = [
         "ocr_engine/ocr_engine.exe",
-        "../src-tauri/ocr_engine/ocr_engine/ocr_engine.exe",
+        "../src-tauri/ocr_engine/ocr_engine.exe",
     ];
     
     for path in &dev_exe_paths {
+        searched_paths.push(path.to_string());
         if std::path::Path::new(path).exists() {
             return Ok((path.to_string(), vec![image_arg]));
         }
@@ -139,6 +143,7 @@ fn get_ocr_command(app_handle: &tauri::AppHandle, image_path: &std::path::Path) 
     ];
     
     for path in &script_paths {
+        searched_paths.push(path.to_string());
         if std::path::Path::new(path).exists() {
             let python = get_python_path();
             let script = std::path::Path::new(path)
@@ -149,7 +154,7 @@ fn get_ocr_command(app_handle: &tauri::AppHandle, image_path: &std::path::Path) 
         }
     }
 
-    Err("OCR 引擎不存在，请重新安装应用".to_string())
+    Err(format!("OCR 引擎不存在，请重新安装应用。\n\n已搜索路径:\n{}", searched_paths.join("\n")))
 }
 
 /// 获取 Python 解释器路径
