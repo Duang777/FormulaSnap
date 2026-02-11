@@ -107,18 +107,11 @@ fn get_ocr_command(app_handle: &tauri::AppHandle, image_path: &std::path::Path) 
     
     // 1. 首先尝试打包的 ocr_engine.exe（生产环境）
     if let Ok(resource_path) = app_handle.path().resource_dir() {
-        // Windows: ocr_engine/ocr_engine.exe
+        // --onefile 模式: ocr_engine/ocr_engine.exe
         let exe_path = resource_path.join("ocr_engine").join("ocr_engine.exe");
         searched_paths.push(exe_path.to_string_lossy().to_string());
         if exe_path.exists() {
             return Ok((exe_path.to_string_lossy().to_string(), vec![image_arg]));
-        }
-        
-        // 直接在资源目录下
-        let exe_direct = resource_path.join("ocr_engine.exe");
-        searched_paths.push(exe_direct.to_string_lossy().to_string());
-        if exe_direct.exists() {
-            return Ok((exe_direct.to_string_lossy().to_string(), vec![image_arg]));
         }
     }
     
