@@ -36,6 +36,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          projectPath: src-tauri
           tagName: ${{ github.ref_name }}
           releaseName: 'FormulaSnap ${{ github.ref_name }}'
           releaseBody: '请查看 CHANGELOG 了解更新内容。'
