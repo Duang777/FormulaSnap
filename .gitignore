@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Python virtual environments
+.venv/
+.venv-texify/
+
+# Build output
+dist/
+target/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tauri
+src-tauri/target/
+
+# Vite
+*.local
+
+# Logs
+*.log
